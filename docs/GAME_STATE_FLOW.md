@@ -548,3 +548,105 @@ This is a special state for arcade operators to perform hardware diagnostics and
 *   The `CDSYST` display state is active.
 *   A static text-based menu is displayed, showing all the diagnostic information and options.
 *   There are no animations or dynamic elements besides the cursor for selecting options. 
+
+---
+
+### 4.6. State: `CNEWAV` (Phantom State: New Wave Initialization)
+
+| | |
+| :--- | :--- |
+| **State ID:** | `$0C` |
+| **Source File:** | `ALWELG.MAC` (as the `INEWAV` subroutine) |
+
+**Note on Implementation:** `CNEWAV` is a unique case. While it is defined as a state in `ALCOMN.MAC`, it is never set as the active `QSTATE`. The `ROUTAD` jump table in `ALEXEC.MAC` contains a `NULL` pointer for `CNEWAV`, meaning it has no direct logic that is executed by the main state machine.
+
+Instead, the responsibilities of `CNEWAV` are handled by the **`INEWAV` subroutine**. This subroutine is called directly by the [`CENDWAV` state logic](./GAME_STATE_FLOW.md#44-state-cendwav--cnewv2-end-of-wave-and-warp) immediately before the transition to the `CNEWV2` warp animation. Therefore, `INEWAV` acts as the *de facto* "New Wave" initialization state.
+
+#### 1. Purpose
+
+The purpose of the `INEWAV` subroutine is to prepare the game world for the upcoming level. It is responsible for tearing down the remnants of the previous wave and setting up all the necessary data structures, enemies, and player abilities for the new one.
+
+#### 2. Responsibilities
+
+-   Determine the geometry and properties of the next playfield.
+-   Deactivate any lingering objects (like player shots) from the previous wave.
+-   Create and place all enemies for the new wave according to its definition.
+-   Recharge the player's Superzapper.
+-   Reset the 3D camera to its starting position for the "tube fly-in" animation.
+
+#### 3. Subroutines Called
+
+-   **`CONTOUR`**: Reads the `WELTAB` table to determine the shape and properties of the upcoming level's well.
+-   **`INIENE`**: The master enemy initialization routine. It clears the old enemy list and creates the new set of Flippers, Tankers, Spikers, etc., for the wave.
+-   **`INIOBJ`**: A cleanup routine that deactivates any active player shots (`CHARGE` objects) and explosions.
+-   **`INISUZ`**: Resets the `SUZCNT` (Superzapper Usage Count) to `0`, giving the player a fresh set of Superzappers for the new wave.
+
+#### 4. Data Read
+
+-   **`CURWAV`**: The current wave number, used as an index into various level data tables.
+-   **Level Data Tables (`WFLICAM`, `WTACAM`, etc.)**: Reads the tables that define enemy types, AI scripts, and other difficulty parameters for the current wave.
+-   **`WELTAB`**: The master table defining the geometry of every well in the game.
+
+#### 5. Data Written
+
+-   **`INVADER` object array**: Populated with the new set of enemies for the wave.
+-   **Playfield Geometry RAM**: The vertex data for the new well is copied into RAM.
+-   **`SUZCNT`**: Reset to `0`.
+-   **Camera Position (`EYL`, `EYH`, `ZADJL`)**: Reset to their default starting values.
+
+#### 6. State Transitions
+
+The `INEWAV` subroutine does not modify the `QSTATE` itself. It is executed as part of the `CENDWAV` state. After `INEWAV` completes, the `CENDWAV` logic proceeds to set the `QSTATE` to `CNEWV2`.
+
+**Execution Flow:**
+1.  State is `CENDWAV`.
+2.  `ENDWAV` routine runs.
+3.  `ENDWAV` calls `JSR INEWAV`.
+4.  `INEWAV` runs, setting up the new level.
+5.  `INEWAV` returns (`RTS`).
+6.  `ENDWAV` continues and sets `QSTATE` = `CNEWV2`.
+
+---
+---
+
+### 4.7. State: `CBOOM` (Superzapper)
+
+| | |
+| :--- | :--- |
+| **State ID:** | `$24` |
+| **Source File:** | `ALWELG.MAC` (as the `PRBOOM` subroutine) |
+
+This state handles the [Superzapper](ENTITIES.md#entity-superzapper-weapon) weapon, which destroys all enemies on the screen.
+
+#### Actions and Activities
+*   The `PRBOOM` routine is called, which initiates a powerful, screen-wide explosion effect originating from the player's ship.
+*   It iterates through all active invaders (`INVAY` array) and deactivates them, effectively destroying them. It does not award points for these kills.
+*   It sets a timer (`SUZTIM`) to control the duration of the visual effect.
+*   It calls `INBOOM` to initialize the explosion's parameters.
+
+#### Timing and Duration
+*   The state is **time-limited.** The `SUZTIM` variable is loaded with a value that corresponds to the duration of the explosion animation, typically around 1-2 seconds.
+*   Once the timer expires, the state exits.
+
+#### Entry and Exit Conditions
+*   **Entry:** Entered from [`CPLAY`](#43-state-cplay-gameplay) when the player presses the Superzapper button and the `SUZTIM` (Superzapper Timer) is charged.
+*   **Exit:** When the explosion animation timer expires, the state **always transitions back to [`CPLAY`](#43-state-cplay-gameplay)**.
+
+#### State Variables and Flags
+| Variable | Action | Description |
+|---|---|---|
+| `QSTATE` | Write | Set to [`CPLAY`](#43-state-cplay-gameplay) on exit. |
+| `QDSTATE`| Write | Set to `CDBOOM` to render the explosion effect. |
+| `SUZTIM` | Write/Read | The timer for the Superzapper effect and cooldown. Set to a high value on entry, decremented each frame. |
+| `INVAY` | Write | All active entries in the invader table are zeroed out. |
+
+#### Input Handling
+*   All player inputs are **ignored**.
+
+#### Sound and Audio Behavior
+*   A loud, distinctive "boom" and "sizzle" sound effect (`SOUTS3`) is played upon entering this state.
+
+#### Visual and Rendering Behavior
+*   The `CDBOOM` display state is active, handled by the `DSBOOM` routine.
+*   This routine draws a series of rapidly expanding and contracting lines originating from the player's ship, creating a dramatic visual effect that fills the screen.
+*   The normal well and player ship are still visible, but all other enemies vanish. 
