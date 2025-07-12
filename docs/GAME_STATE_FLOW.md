@@ -23,7 +23,7 @@ The following table lists every game state constant defined in `source/ALCOMN.MA
 | [`CENDLI`](#45-state-cendli-cnewli--cnwlf2-player-death--respawn) | 06 | **End Life:** Processes the events after a player life is lost. |
 | [`CENDGA`](#46-state-cendga-chischk--cgetini-game-over--high-scores) | 08 | **End Game:** Processes the end of a game and transitions to high scores. |
 | [`CPAUSE`](#48-state-cpause-generic-pause) | 0A | **Pause:** A generic timed pause state used between other states. |
-| `CNEWAV` | 0C | **New Wave:** Initializes enemies for a new wave/level. |
+| [`CNEWAV`](#46-state-cnewav-phantom-state-new-wave-initialization) | 0C | **New Wave:** Initializes enemies for a new wave/level. (Handled by `INEWAV` subroutine). |
 | [`CENDWAV`](#44-state-cendwav--cnewv2-end-of-wave-and-warp) | 0E | **End Wave:** Processes the end of a wave and calculates bonuses. |
 | [`CHISCHK`](#46-state-cendga-chischk--cgetini-game-over--high-scores)| 10 | **High Score Check:** Checks if the player's score qualifies for the table. |
 | [`CGETINI`](#46-state-cendga-chischk--cgetini-game-over--high-scores)| 12 | **Get Initials:** The state for entering initials into the high score table. |
