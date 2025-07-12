@@ -55,27 +55,27 @@ The output of the linker is a single binary file (e.g., `ALEXEC.LDA`). This file
 
 ## 3. Hardware API and Data Contracts (Stage 6)
 
-The software's "API" is the set of memory-mapped hardware registers it uses to interact with the physical components of the arcade machine. A comprehensive list of these registers is documented in `docs/ALCOMN.md`.
+The software's "API" is the set of memory-mapped hardware registers it uses to interact with the physical components of the arcade machine. A comprehensive list of these registers is documented in the main [Systems](./SYSTEMS.md) and [Data Assets](./DATA_ASSETS.md) documents.
 
 ### 3.1. Key Hardware Registers
 
 | Address | Name | R/W | Description |
 |---|---|---|---|
-| `$0800` | `COLPORT` | W | **Color Port:** Sets the color for the vector generator. |
+| `$0800` | `COLPORT` | W | **Color Port:** Sets the color for the [vector generator](./SYSTEMS.md#1-vector-graphics-engine). |
 | `$0C00` | `IN1` | R | **Input Port 1:** Reads the state of the cabinet switches (Coin, Test, Slam). |
 | `$0D00` | `INOP0` | R | **DIP Switch Bank 0:** Reads the operator settings for pricing. |
 | `$0E00` | `INOP1` | R | **DIP Switch Bank 1:** Reads operator settings for lives, bonus, and language. |
-| `$2000` | `VECRAM`| W | **Vector RAM:** The start of the 2KB RAM where the CPU builds the display list. |
-| `$4800` | `VGSTART` | W | **Vector Generator Start:** Writing here tells the VG to start drawing. |
+| `$2000` | `VECRAM`| W | **Vector RAM:** The start of the 2KB RAM where the CPU builds the [display list](./SYSTEMS.md#1-vector-graphics-engine). |
+| `$4800` | `VGSTART` | W | **[Vector Generator](./SYSTEMS.md#1-vector-graphics-engine) Start:** Writing here tells the VG to start drawing. |
 | `$5000` | `WTCHDG` | W | **Watchdog Reset:** Must be written to periodically to prevent a hardware reset. |
-| `$5800` | `VGSTOP` | W | **Vector Generator Stop:** Halts the VG processor. |
-| `$6000` | `HARDWA` | R/W| **Base address for the Auxiliary "Mathbox" board.** All EAROM, POKEY, and Mathbox registers are offsets from this address. |
-| `$60C0` | `POKEY` | R/W | Base address for the first POKEY sound chip. |
-| `$60D0` | `POKEY2`| R/W | Base address for the second POKEY sound chip (also used for rotary dial input). |
+| `$5800` | `VGSTOP` | W | **[Vector Generator](./SYSTEMS.md#1-vector-graphics-engine) Stop:** Halts the VG processor. |
+| `$6000` | `HARDWA` | R/W| **Base address for the Auxiliary "Mathbox" board.** All [EAROM](./SYSTEMS.md#37-earom-non-volatile-storage), [POKEY](./SYSTEMS.md#6-sound-engine-alsounmac), and [Mathbox](./SYSTEMS.md#2-mathbox-co-processor) registers are offsets from this address. |
+| `$60C0` | `POKEY` | R/W | Base address for the first [POKEY sound chip](./SYSTEMS.md#6-sound-engine-alsounmac). |
+| `$60D0` | `POKEY2`| R/W | Base address for the second POKEY sound chip (also used for [rotary dial input](./UI.md#22-rotary-controller)). |
 
 ### 3.2. EAROM Data Schema
 
-The EAROM serves as the game's non-volatile "database." It has a simple, fixed schema:
+The [EAROM](./SYSTEMS.md#37-earom-non-volatile-storage) serves as the game's non-volatile "database." It has a simple, fixed schema:
 -   **Block 0:** Initials Table (9 bytes)
 -   **Block 1:** High Score Table (11 bytes)
 -   **Block 2:** Bookkeeping Statistics (size varies)
@@ -87,9 +87,9 @@ Each block is protected by a checksum to ensure data integrity. The `ALEARO.MAC`
 ## 4. Additional Details (Stage 7)
 
 ### Key Design Decisions
--   **Hardware Acceleration:** The design offloads critical, performance-intensive tasks to dedicated hardware, a common technique in high-performance arcade games of the era. The **Vector Generator** handles all graphics rendering, and the **Mathbox** handles all 16-bit multiplication for 3D math. This frees up the main 6502 CPU to focus entirely on game logic.
--   **Data-Driven Design:** Many of the subsystems (sound, text, vector shapes) are designed to be "data-driven." The logic is generic, and the specific outcomes are controlled by structured tables of data. This is a sophisticated design that makes the code more flexible and easier to modify.
--   **Robustness:** The use of a hardware watchdog timer, a software stack check in the IRQ, and checksums on the EAROM data demonstrates a focus on creating a highly robust and reliable system that can run continuously in an arcade environment.
+-   **Hardware Acceleration:** The design offloads critical, performance-intensive tasks to dedicated hardware, a common technique in high-performance arcade games of the era. The **[Vector Generator](./SYSTEMS.md#1-vector-graphics-engine)** handles all graphics rendering, and the **[Mathbox](./SYSTEMS.md#2-mathbox-co-processor)** handles all 16-bit multiplication for 3D math. This frees up the main 6502 CPU to focus entirely on game logic.
+-   **Data-Driven Design:** Many of the subsystems ([sound](./SYSTEMS.md#6-sound-engine-alsounmac), [text](./DATA_ASSETS.md#1-text-and-language-data), [vector shapes](./DATA_ASSETS.md#2-vector-shapes)) are designed to be "data-driven." The logic is generic, and the specific outcomes are controlled by structured tables of data. This is a sophisticated design that makes the code more flexible and easier to modify.
+-   **Robustness:** The use of a hardware watchdog timer, a software stack check in the IRQ, and checksums on the [EAROM](./SYSTEMS.md#37-earom-non-volatile-storage) data demonstrates a focus on creating a highly robust and reliable system that can run continuously in an arcade environment.
 
 ---
 

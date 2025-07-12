@@ -7,25 +7,25 @@ This document provides a brief overview of files in the codebase that appear to 
 ## `ALDISP.MAC`
 
 -   **Superseded by:** `ALDIS2.MAC`
--   **Purpose:** Display List Manager.
+-   **Purpose:** [Display List Manager](./SYSTEMS.md#1-vector-engine).
 -   **Analysis:** This is an earlier version of the main rendering engine. The file structure, key subroutines (`DISPLAY`, `DENORM`), double-buffering architecture, and display state machine are all functionally identical to those found in `ALDIS2.MAC`.
 
 ## `ALSCOR.MAC`
 
 -   **Superseded by:** `ALSCO2.MAC`
--   **Purpose:** Scoring & Gameplay Module.
+-   **Purpose:** [Scoring & Gameplay Module](./GAME_STATE_FLOW.md).
 -   **Analysis:** An earlier version of the core gameplay and UI text module.
 
 ## `ALHARD.MAC`
 
 -   **Superseded by:** `ALHAR2.MAC`
--   **Purpose:** Interrupt Request (IRQ) Handler.
+-   **Purpose:** [Interrupt Request (IRQ) Handler](./SYSTEMS.md).
 -   **Analysis:** An earlier version of the main hardware interrupt service routine.
 
 ## `ALTEST.MAC`
 
 -   **Superseded by:** `ALTES2.MAC`
--   **Purpose:** Self-Test and Diagnostics.
+-   **Purpose:** [Self-Test and Diagnostics](./GAME_STATE_FLOW.md#12-csystm---system-test-mode).
 -   **Analysis:** An earlier version of the operator's test mode.
 
 ## `ALDIAG.MAC`

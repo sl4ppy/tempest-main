@@ -11,32 +11,32 @@ These are the core variables in RAM that are modified by the level data tables. 
 | Variable | Description |
 | :--- | :--- |
 | `WCHARFR` | Frames until an enemy can fire. |
-| `WCHAMX` | Maximum number of enemy shots on screen at once (minus 1). |
-| `WFLMIN` | Minimum number of Flipper enemies to spawn. |
-| `WFLMAX` | Maximum number of Flipper enemies to spawn. |
-| `WPUMIN` | Minimum number of Pulsar enemies. |
-| `WPUMAX` | Maximum number of Pulsar enemies. |
-| `WTAMIN` | Minimum number of Tanker enemies. |
-| `WTAMAX` | Maximum number of Tanker enemies. |
-| `WSPMIN` | Minimum number of Spiker enemies. |
-| `WSPMAX` | Maximum number of Spiker enemies. |
-| `WFUMIN` | Minimum number of Fuseball enemies. |
-| `WFUMAX` | Maximum number of Fuseball enemies. |
-| `PULPOT` | Pulsar "potency" height. |
-| `PULTIM` | Pulsar timer increment. |
+| `WCHAMX` | Maximum number of [enemy shots](./ENTITIES.md#11-enemy-bullet) on screen at once (minus 1). |
+| `WFLMIN` | Minimum number of [Flipper](./ENTITIES.md#5-flipper) enemies to spawn. |
+| `WFLMAX` | Maximum number of [Flipper](./ENTITIES.md#5-flipper) enemies to spawn. |
+| `WPUMIN` | Minimum number of [Pulsar](./ENTITIES.md#9-pulsar) enemies. |
+| `WPUMAX` | Maximum number of [Pulsar](./ENTITIES.md#9-pulsar) enemies. |
+| `WTAMIN` | Minimum number of [Tanker](./ENTITIES.md#6-tanker) enemies. |
+| `WTAMAX` | Maximum number of [Tanker](./ENTITIES.md#6-tanker) enemies. |
+| `WSPMIN` | Minimum number of [Spiker](./ENTITIES.md#7-spiker) enemies. |
+| `WSPMAX` | Maximum number of [Spiker](./ENTITIES.md#7-spiker) enemies. |
+| `WFUMIN` | Minimum number of [Fuseball](./ENTITIES.md#8-fuseball) enemies. |
+| `WFUMAX` | Maximum number of [Fuseball](./ENTITIES.md#8-fuseball) enemies. |
+| `PULPOT` | [Pulsar](./ENTITIES.md#9-pulsar) "potency" height. |
+| `PULTIM` | [Pulsar](./ENTITIES.md#9-pulsar) timer increment. |
 | `WTACAR+2` | CAM pattern for one type of enemy. |
 | `WTACAR+3` | CAM pattern for another type of enemy. |
 | `WINVMX` | Maximum number of "invaders" (general enemies). |
-| `NWNYMC` | Number of "nymphs" (the small particles that form Spikers). |
+| `NWNYMC` | Number of "nymphs" (the small particles that form [Spikers](./ENTITIES.md#7-spiker)). |
 | `NWTELI` | Initial height of the enemy lines at the top of the well. |
-| `PUCHDE` | Pulsar chase delay. |
-| `WFLICAM` | The CAM (movement) pattern used by Flippers for the current level. |
-| `WPULFI` | Controls whether Pulsars can fire. |
-| `WTTFRA` | The rate at which Flippers change their animation frame. |
+| `PUCHDE` | [Pulsar](./ENTITIES.md#9-pulsar) chase delay. |
+| `WFLICAM` | The CAM (movement) pattern used by [Flippers](./ENTITIES.md#5-flipper) for the current level. |
+| `WPULFI` | Controls whether [Pulsars](./ENTITIES.md#9-pulsar) can fire. |
+| `WTTFRA` | The rate at which [Flippers](./ENTITIES.md#5-flipper) change their animation frame. |
 | `WINVIL` | Fractional part of the base speed for "invader" type enemies. |
 | `WINVIN` | Integer part of the base speed for "invader" type enemies. |
-| `TSPIIN` | Speed of Spikers. |
-| `TCHARIN` | Speed of enemy shots. |
+| `TSPIIN` | Speed of [Spikers](./ENTITIES.md#7-spiker). |
+| `TCHARIN` | Speed of [enemy shots](./ENTITIES.md#11-enemy-bullet). |
 
 ## `WTABLE` Data Structure
 
@@ -77,7 +77,7 @@ This table controls how frequently enemies can fire. The value is the number of 
 | `T1` | 65-99 | `10` | Fixed at 10 frames. |
 
 ### `TCHAMX` (modifies `WCHAMX` - Max Enemy Shots)
-The maximum number of enemy shots allowed on screen at once is `value + 1`.
+The maximum number of [enemy shots](./ENTITIES.md#11-enemy-bullet) allowed on screen at once is `value + 1`.
 
 | Type | Wave Range | Data | Effect |
 | :--- | :--- | :--- | :--- |
@@ -86,7 +86,7 @@ The maximum number of enemy shots allowed on screen at once is `value + 1`.
 | `T1` | 65-99 | `3` | Max shots is 4. |
 
 ### `TINVIN` (modifies `WINVIN` - Base Invader Speed)
-This is the integer part of the base speed for Flippers and Tankers. Higher negative numbers mean faster speed.
+This is the integer part of the base speed for [Flippers](./ENTITIES.md#5-flipper) and [Tankers](./ENTITIES.md#6-tanker). Higher negative numbers mean faster speed.
 
 | Type | Wave Range | Data | Effect |
 | :--- | :--- | :--- | :--- |
@@ -97,7 +97,7 @@ This is the integer part of the base speed for Flippers and Tankers. Higher nega
 | ... | ... | ... | ... |
 
 ### `TFLIMI` / `WFLIMX` (modifies `WFLMIN` / `WFLMAX` - Flipper Count)
-These tables control the min/max number of Flippers that spawn.
+These tables control the min/max number of [Flippers](./ENTITIES.md#5-flipper) that spawn.
 
 | Table | Type | Wave Range | Data | Effect |
 | :--- | :--- | :--- | :--- | :--- |
@@ -105,25 +105,25 @@ These tables control the min/max number of Flippers that spawn.
 | `WFLIMI` | `T1` | 5-99 | `0` | Min 0 flippers. |
 | `WFLIMX` | `T1` | 1-4 | `4` | Max 4 flippers. |
 | `WFLIMX` | `T1` | 5-16 | `5` | Max 5 flippers. |
-| `WFLIMX` | `T1` | 17-19 | `3` | Max 3 flippers (Pulsars appear). |
+| `WFLIMX` | `T1` | 17-19 | `3` | Max 3 flippers ([Pulsars](./ENTITIES.md#9-pulsar) appear). |
 | ... | ... | ... | ... | ... |
 
 ### `WTANMI` / `WTANMX` (modifies `WTAMIN` / `WTAMAX` - Tanker Count)
 
 | Table | Type | Wave Range | Data | Effect |
 | :--- | :--- | :--- | :--- | :--- |
-| `WTANMI` | `TZ` | 1-4 | `0,0,1,0` | Min tankers appear on wave 3. |
+| `WTANMI` | `TZ` | 1-4 | `0,0,1,0` | Min [Tankers](./ENTITIES.md#6-tanker) appear on wave 3. |
 | `WTANMI` | `T1` | 5-16 | `1` | Min 1 tanker. |
-| `WTANMX` | `TZ` | 1-5 | `0,0,1,0,1`| Max tankers appear. |
+| `WTANMX` | `TZ` | 1-5 | `0,0,1,0,1`| Max [Tankers](./ENTITIES.md#6-tanker) appear. |
 | `WTANMX` | `T1` | 6-16 | `2` | Max 2 tankers. |
 | ... | ... | ... | ... | ... |
 
 ### `CAMWAV` (modifies `WFLICAM` - Flipper Movement CAM)
-This table uses the `TZANDF` encoding to create a repeating 16-wave pattern for the Flipper's movement AI.
+This table uses the `TZANDF` encoding to create a repeating 16-wave pattern for the [Flipper's](./ENTITIES.md#5-flipper) movement AI.
 
 | Type | Wave Range | Data | Effect |
 | :--- | :--- | :--- | :--- |
-| `TZANDF` | 1-99 | `[NOJUMP, MOVJMP, ...]` | A repeating sequence of 16 different CAM pointers. Determines if flippers jump, spiral, etc. |
+| `TZANDF` | 1-99 | `[NOJUMP, MOVJMP, ...]` | A repeating sequence of 16 different CAM pointers. Determines if [Flippers](./ENTITIES.md#5-flipper) jump, spiral, etc. |
 
 ### `TELIHI` (modifies `NWTELI` - Enemy Line Height)
 This also uses `TZANDF` to set the starting height of the enemies at the top of the well, creating different visual patterns for the wells.

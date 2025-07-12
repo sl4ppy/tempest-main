@@ -4,7 +4,7 @@ This document provides a complete technical specification for the playfield in T
 
 ## 1. Overall Geometry and Coordinate System
 
-The Tempest playfield is a 3D vector-based tube, or "well," viewed from one end with a perspective projection. The player's ship is constrained to the outer rim closest to the camera, while enemies emerge from the far end and travel "up" the well's walls towards the player.
+The Tempest playfield is a 3D vector-based tube, or "well," viewed from one end with a perspective projection. The [player's ship](./ENTITIES.md#1-player-the-claw) is constrained to the outer rim closest to the camera, while [enemies](./ENTITIES.md#4-common-enemy-ai-and-behavior) emerge from the far end and travel "up" the well's walls towards the player.
 
 ### 1.1. Coordinate System
 
@@ -27,7 +27,7 @@ The well is not a true mathematical tube but a 16-sided polygonal prism. It is d
 
 ## 2. Master Geometry Data Tables
 
-The fundamental shapes of all possible wells in the game are defined by a set of static, hardcoded vertex data tables located in `ALVROM.MAC`. The game engine selects from these master templates and copies the data into RAM to create the active playfield for a given wave.
+The fundamental shapes of all possible wells in the game are defined by a set of static, hardcoded [vector shape](./DATA_ASSETS.md#2-vector-shapes) data tables located in `ALVROM.MAC`. The game engine selects from these master templates and copies the data into RAM to create the active playfield for a given wave.
 
 The primary tables define the X and Z coordinates for each of the 16 vertices of a shape's inner and outer rings.
 
@@ -77,7 +77,7 @@ The procedural generation system, detailed in the next section, is responsible f
 
 ## 3. Procedural Generation and Level Selection
 
-The game does not generate well geometry from scratch using mathematical formulas in real-time. Instead, it employs a table-driven procedural selection and modification system to construct the playfield for each wave. The process is orchestrated by the `CONTOUR` routine in `ALWELG.MAC`, which uses a master definition table in `ALVROM.MAC`.
+The game does not generate well geometry from scratch using mathematical formulas in real-time. Instead, it employs a [table-driven procedural selection](./SYSTEMS.md#7-procedural-generation-engine) and modification system to construct the playfield for each wave. The process is orchestrated by the `CONTOUR` routine in `ALWELG.MAC`, which uses a master definition table in `ALVROM.MAC`.
 
 ### 3.1. The Master Well Table (`WELTAB`)
 
@@ -114,7 +114,7 @@ The `CONTOUR` routine in `ALWELG.MAC` is called at the start of each new wave to
     4.  **Copy and Modify Data:** It then copies the 16 pairs of X/Z coordinates from the master tables in ROM into the active well geometry tables in RAM.
     5.  **Apply Properties:** It reads the `WELTYP` flag and applies the properties. For example, if the "Closed" bit is not set, it will treat the shape as open, which affects rendering and enemy pathfinding.
 
-This system allows the game to feature a wide variety of playfield shapes by simply selecting and slightly modifying a small set of pre-defined, high-quality vector shapes, which is far more efficient than generating complex geometry from scratch on 1980s hardware.
+This system allows the game to feature a wide variety of playfield shapes by simply selecting and slightly modifying a small set of pre-defined, high-quality [vector shapes](./DATA_ASSETS.md#2-vector-shapes), which is far more efficient than generating complex geometry from scratch on 1980s hardware.
 
 ## 4. Visual Representation and Rendering
 
@@ -125,14 +125,14 @@ The well's geometric data is translated into on-screen vectors through a renderi
 The core routines responsible for drawing the well are `DSPWEL` and `BLDWEL`.
 
 1.  **`DSPWEL` (Display Well):** This is the main entry point, called once per frame. It checks a flag (`ROTDIS`) to see if the well's shape or position has changed. If so, it calls `BLDWEL` to create a new, updated display list for the well's vectors. Otherwise, it uses the previously generated list.
-2.  **`BLDWEL` (Build Well):** This routine is the primary constructor. It reads the active vertex data from the `LINEX`/`Z` and `LIFSX`/`Z` RAM tables and builds a list of vectors for the hardware to draw.
+2.  **`BLDWEL` (Build Well):** This routine is the primary constructor. It reads the active vertex data from the `LINEX`/`Z` and `LIFSX`/`Z` RAM tables and builds a list of vectors for the [hardware](./SYSTEMS.md#1-vector-graphics-engine) to draw.
 3.  **Drawing Order:** The well is drawn as a series of individual lines in a specific order to construct the tube shape:
     -   First, it draws the 16 "spokes"—the long lines connecting each vertex of the outer rim to the corresponding vertex on the inner rim.
     -   Second, it draws the "rungs"—the short lines connecting adjacent vertices on the outer rim, and then the lines connecting adjacent vertices on the inner rim, forming the two 16-sided polygons.
 
 ### 4.2. 3D Perspective Projection
 
-Tempest creates its convincing 3D effect using a true perspective projection, handled by the Atari "Math Box" coprocessor.
+Tempest creates its convincing 3D effect using a true perspective projection, handled by the Atari ["Math Box"](./SYSTEMS.md#2-mathbox-co-processor) coprocessor.
 
 -   **`WORSCR` (World to Screen):** Before a vector is drawn, its 3D world coordinates (X, Y, Z) are passed to the `WORSCR` routine.
 -   **`PROJEC` (Project):** `WORSCR` uses the `PROJEC` function of the Math Box. This hardware function performs the perspective division calculation, which scales the X and Z coordinates based on the Y (depth) coordinate. This means objects (or vertices) farther "down the well" (with a larger Y value) are drawn smaller and closer to the center vanishing point, creating the illusion of depth.
@@ -142,7 +142,7 @@ Tempest creates its convincing 3D effect using a true perspective projection, ha
 The color of the well is dynamic and can be affected by gameplay events.
 
 -   **Base Color:** The default color of the well is defined by the `WELCOL` variable.
--   **Superzapper Effect:** When the Superzapper is active (`SUZTIM > 0`), the `DSPWEL` routine overrides the base color. It uses the global frame counter (`QFRAME`) to rapidly cycle through the hardware color palette, creating the signature rainbow strobing effect.
+-   **Superzapper Effect:** When the [Superzapper](./ENTITIES.md#3-superzapper) is active (`SUZTIM > 0`), the `DSPWEL` routine overrides the base color. It uses the global frame counter (`QFRAME`) to rapidly cycle through the hardware color palette, creating the signature rainbow strobing effect.
 -   **Bonus Flash:** When the player earns a bonus, the `BOFLASH` timer is activated, causing the well to flash a specific color for a short duration.
 -   **Player "Flashlight":** The two segments of the well immediately under the player's ship are always drawn in the player's color (`CURCOL`), creating a "flashlight" effect that helps the player track their position.
 
@@ -151,7 +151,7 @@ The color of the well is dynamic and can be affected by gameplay events.
 The playfield itself is not static; it animates during the transition between waves, creating the signature "warp" effect. This is a procedural animation controlled by the `NEWAV2` routine in `ALWELG.MAC`.
 
 -   **Animation Type:** Procedural 3D Transform (Camera and Geometry).
--   **Trigger:** The `NEWAV2` state is entered after a wave is cleared, initiating the animation sequence.
+-   **Trigger:** The [`CNEWV2` (Wave Transition)](./GAME_STATE_FLOW.md#5-cnewv2--cwavdon---wave-transition-and-bonus) state is entered after a wave is cleared, initiating the animation sequence.
 
 The transition combines two simultaneous effects: moving the camera forward along the depth axis and shifting the center of the far plane.
 
@@ -164,7 +164,7 @@ This effect creates the sensation of flying down the tube into the next level.
     2.  Each frame, it adds a constant value (`$18`) to the 16-bit `EYL`/`EYH` variable, which stores the camera's Y-coordinate (depth).
     3.  This moves the camera's viewpoint forward at a constant velocity.
     4.  The animation continues until the camera's position (`EYL`) reaches a pre-defined destination depth (`EYLDES`).
-    5.  Once the destination is reached, the animation stops, and the `QSTATE` is changed to `CPLAY` to begin the next level.
+    5.  Once the destination is reached, the animation stops, and the `QSTATE` is changed to [`CPLAY`](./GAME_STATE_FLOW.md#4-cplay---gameplay) to begin the next level.
 
 -   **Parameters:**
     -   **`EYL`/`EYH`:** The 16-bit world-space Y-coordinate of the camera.
@@ -190,15 +190,15 @@ The playfield's geometry is not just visual; it defines the boundaries for all g
 ### 6.1. Entity Movement and Constraints
 
 -   **Player Movement:** The player's ship (`Cursor`) is constrained to move only along the vertices of the outer rim (the "near" plane). Its position is tracked as a fractional value along this 16-sided path.
--   **Enemy Movement:** Enemies are constrained to move along the 16 "spokes" or "lines" of the well. An enemy's position is defined by its line number (0-15) and its depth (`INVAY`) along that line. Enemies can only move between lines by executing a "flip" or "jump" maneuver, which is a scripted transition from one line to the next.
+-   **Enemy Movement:** [Enemies](./ENTITIES.md#4-common-enemy-ai-and-behavior) are constrained to move along the 16 "spokes" or "lines" of the well. An enemy's position is defined by its line number (0-15) and its depth (`INVAY`) along that line. Enemies can only move between lines by executing a "flip" or "jump" maneuver, which is a scripted transition from one line to the next.
 
 ### 6.2. The Spike Collision System
 
-The most significant interaction with the playfield's geometry is the "Spike" hazard created by the Spiker enemy. This is a procedural modification of the well's collision boundaries.
+The most significant interaction with the playfield's geometry is the "Spike" hazard created by the [Spiker](./ENTITIES.md#7-spiker) enemy. This is a procedural modification of the well's collision boundaries, managed by the [Spike System](./SYSTEMS.md#8-spike-system).
 
 -   **The `LINEY` Array:** This array of 16 bytes is the definitive source for the collision depth of the far end of the well for each of the 16 lines. By default, all entries are set to `$F0`, the bottom of the well.
 -   **Spike Creation (`JSTRAI` routine):**
-    -   When a Spiker enemy moves, it continuously writes its own Y-depth (`INVAY`) into the `LINEY` array entry corresponding to the line it is on.
+    -   When a [Spiker](./ENTITIES.md#7-spiker) enemy moves, it continuously writes its own Y-depth (`INVAY`) into the `LINEY` array entry corresponding to the line it is on.
     -   `LINEY[Spiker_Line] = Spiker_Y_Position`
     -   This has the effect of dynamically "pulling" the collision boundary of that specific well segment up from the bottom of the well to the Spiker's current position.
 -   **Player Collision (`MOVCUD` routine):**
@@ -208,4 +208,4 @@ The most significant interaction with the playfield's geometry is the "Spike" ha
     -   `IF Player_Y_Position >= LINEY[Player_Line]`
     -   If this condition is true, a collision is registered, and the player is destroyed. This makes the Spikes a lethal, invisible wall during the drop.
 
-The Spike system is a highly efficient and clever piece of procedural design, creating a dynamic environmental hazard by modifying a single data value in an array that defines the playfield's core collision geometry. 
+The [Spike System](./SYSTEMS.md#8-spike-system) is a highly efficient and clever piece of procedural design, creating a dynamic environmental hazard by modifying a single data value in an array that defines the playfield's core collision geometry. 
