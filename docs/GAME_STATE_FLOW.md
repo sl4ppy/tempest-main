@@ -33,7 +33,7 @@ The following table lists every game state constant defined in `source/ALCOMN.MA
 | [`CLOGO`](../ATTRACT_MODE.md#22-logo-presentation-clogo) | 1A | **Logo Init:** Initializes the Atari logo animation in the attract mode. |
 | [`CINIRAT`](#42-state-cinirat--creqrat-skill-selection)| 1C | **Initialize Rate:** Initializes the gameplay demo or the skill selection screen. |
 | [`CNWLF2`](#45-state-cendli-cnewli--cnwlf2-player-death--respawn) | 1E | **New Life 2:** The second part of the new life sequence. |
-| `CDROP` | 20 | **Drop Mode:** A special gameplay mode for specific enemies. |
+| [`CDROP`](#410-state-cdrop-player-drop-mode) | 20 | **Drop Mode:** A special gameplay mode for the player during the inter-level warp. |
 | [`CSYSTM`](#49-state-csystm-system-test-mode) | 22 | **System:** The operator-facing system test and diagnostic mode. |
 | [`CBOOM`](#47-state-cboom-superzapper) | 24 | **Boom:** The state that handles the Superzapper explosion effect. |
 
@@ -550,103 +550,89 @@ This is a special state for arcade operators to perform hardware diagnostics and
 *   There are no animations or dynamic elements besides the cursor for selecting options. 
 
 ---
+---
 
-### 4.6. State: `CNEWAV` (Phantom State: New Wave Initialization)
+### 4.10. State: `CDROP` (Player Drop Mode)
 
-| | |
-| :--- | :--- |
-| **State ID:** | `$0C` |
-| **Source File:** | `ALWELG.MAC` (as the `INEWAV` subroutine) |
+This is a special state that governs the player's actions during the "tube fly-in" or "warp" sequence between levels.
 
-**Note on Implementation:** `CNEWAV` is a unique case. While it is defined as a state in `ALCOMN.MAC`, it is never set as the active `QSTATE`. The `ROUTAD` jump table in `ALEXEC.MAC` contains a `NULL` pointer for `CNEWAV`, meaning it has no direct logic that is executed by the main state machine.
-
-Instead, the responsibilities of `CNEWAV` are handled by the **`INEWAV` subroutine**. This subroutine is called directly by the [`CENDWAV` state logic](./GAME_STATE_FLOW.md#44-state-cendwav--cnewv2-end-of-wave-and-warp) immediately before the transition to the `CNEWV2` warp animation. Therefore, `INEWAV` acts as the *de facto* "New Wave" initialization state.
+*   **Routine:** `PLDROP` in `source/ALWELG.MAC`
+*   **Purpose:** To give the player limited control of their ship as it automatically travels down the Z-axis to the next level, allowing them to move, fire, and potentially be killed by leftover hazards.
 
 #### 1. Purpose
 
-The purpose of the `INEWAV` subroutine is to prepare the game world for the upcoming level. It is responsible for tearing down the remnants of the previous wave and setting up all the necessary data structures, enemies, and player abilities for the new one.
+While the [`CNEWV2`](#44-state-cendwav--cnewv2-end-of-wave-and-warp) state controls the *camera's* movement during the warp, `CDROP` handles the *player's* specific state during this sequence. It allows the warp to be an interactive, albeit limited, part of the gameplay experience.
 
 #### 2. Responsibilities
 
--   Determine the geometry and properties of the next playfield.
--   Deactivate any lingering objects (like player shots) from the previous wave.
--   Create and place all enemies for the new wave according to its definition.
--   Recharge the player's Superzapper.
--   Reset the 3D camera to its starting position for the "tube fly-in" animation.
+-   Update the player's position on the rim based on rotary knob input.
+-   Update the player's Z-depth based on a constantly accelerating velocity.
+-   Allow the player to fire projectiles.
+-   Update the position of player projectiles.
+-   Process player death if a collision occurs during the drop.
 
 #### 3. Subroutines Called
 
--   **`CONTOUR`**: Reads the `WELTAB` table to determine the shape and properties of the upcoming level's well.
--   **`INIENE`**: The master enemy initialization routine. It clears the old enemy list and creates the new set of Flippers, Tankers, Spikers, etc., for the wave.
--   **`INIOBJ`**: A cleanup routine that deactivates any active player shots (`CHARGE` objects) and explosions.
--   **`INISUZ`**: Resets the `SUZCNT` (Superzapper Usage Count) to `0`, giving the player a fresh set of Superzappers for the new wave.
+-   **`MOVCUR`**: Reads rotary knob input (`TBHD`) and updates the player's circumferential position (`CURSPO`, `CURSL1`).
+-   **`MOVCUD`**: Updates the player's Z-depth (`CURSY`) by adding the current velocity (`CURSVL`/`H`). Also handles the constant acceleration of the player's ship.
+-   **`FIREPC`**: Checks for the fire button press and creates new `CHARGE` objects (player shots).
+-   **`MOVCHA`**: Updates the positions of all active player shots.
+-   **`PROEXP`**: Updates any active explosion animations.
+-   **`ANALYZ`**: Called if the player dies, to check for remaining lives and transition to the next state.
+-   **`SOUTS2`**: Plays the "rumble" or "thrust" sound at the start of the drop.
+-   **`SOUTS3`**: Plays the "space sound" when the drop is complete.
 
 #### 4. Data Read
 
--   **`CURWAV`**: The current wave number, used as an index into various level data tables.
--   **Level Data Tables (`WFLICAM`, `WTACAM`, etc.)**: Reads the tables that define enemy types, AI scripts, and other difficulty parameters for the current wave.
--   **`WELTAB`**: The master table defining the geometry of every well in the game.
+-   **`CURSL2`**: Read to check if the player is alive before processing any logic.
+-   **`CURMOD`**: Read to confirm the player is in "drop mode" (this variable is negative).
+-   **`CURWAV`**: The current wave number, used to calculate the acceleration bonus.
+-   **Input flags (`MFIRE`)**: Read to check for firing.
+-   **Rotary Knob (`TBHD`)**: Read to control movement.
 
 #### 5. Data Written
 
--   **`INVADER` object array**: Populated with the new set of enemies for the wave.
--   **Playfield Geometry RAM**: The vertex data for the new well is copied into RAM.
--   **`SUZCNT`**: Reset to `0`.
--   **Camera Position (`EYL`, `EYH`, `ZADJL`)**: Reset to their default starting values.
+-   **`CURSPO`, `CURSL1`, `CURSL2`**: The player's circumferential position.
+-   **`CURSY`, `CURSYL`**: The player's Z-depth (position along the tube).
+-   **`CURSVL`, `CURSVH`**: The player's Z-axis velocity.
+-   **`CHARGE` object array**: New entries are created when the player fires.
+-   **`QSTATE`**: Set to `CENDWA` (a presumed alias for a wave transition state) upon completing the drop.
 
 #### 6. State Transitions
 
-The `INEWAV` subroutine does not modify the `QSTATE` itself. It is executed as part of the `CENDWAV` state. After `INEWAV` completes, the `CENDWAV` logic proceeds to set the `QSTATE` to `CNEWV2`.
+-   **Entry:** The `CDROP` state is set by logic within `ALWELG.MAC`, likely during the transition from `CENDWAV`.
+-   **Exit:**
+    -   **Normal Exit:** When the player's `CURSY` depth reaches the bottom of the well (`ILINDDY`), the state transitions to `CENDWA`.
+    -   **Player Death:** If the player collides with a hazard (e.g., a Spike left on the well) during the drop, the `ANALYZ` routine is called, which will transition the game to the [`CENDLI`](#45-state-cendli-cnewli--cnwlf2-player-death--respawn) sequence.
 
-**Execution Flow:**
-1.  State is `CENDWAV`.
-2.  `ENDWAV` routine runs.
-3.  `ENDWAV` calls `JSR INEWAV`.
-4.  `INEWAV` runs, setting up the new level.
-5.  `INEWAV` returns (`RTS`).
-6.  `ENDWAV` continues and sets `QSTATE` = `CNEWV2`.
+#### 7. Timing and Duration
 
----
----
+The duration of this state is time-limited and corresponds to the length of the warp animation, which is typically 1-2 seconds. The player's velocity is constantly accelerating, so the time is not fixed but depends on the level's acceleration parameters.
 
-### 4.7. State: `CBOOM` (Superzapper)
+#### 8. Input Handling
 
-| | |
-| :--- | :--- |
-| **State ID:** | `$24` |
-| **Source File:** | `ALWELG.MAC` (as the `PRBOOM` subroutine) |
+-   **Rotary Knob:** **Accepted.** The player can move their ship left and right on the rim.
+-   **Fire Button:** **Accepted.** The player can fire projectiles down the tube.
+-   **Superzapper/Start:** Ignored.
 
-This state handles the [Superzapper](ENTITIES.md#entity-superzapper-weapon) weapon, which destroys all enemies on the screen.
+#### 9. Sound and Audio Behavior
 
-#### Actions and Activities
-*   The `PRBOOM` routine is called, which initiates a powerful, screen-wide explosion effect originating from the player's ship.
-*   It iterates through all active invaders (`INVAY` array) and deactivates them, effectively destroying them. It does not award points for these kills.
-*   It sets a timer (`SUZTIM`) to control the duration of the visual effect.
-*   It calls `INBOOM` to initialize the explosion's parameters.
+-   The `SOUTS2` "rumble" sound is played at the start of the drop.
+-   The `SOUTS3` "space" sound is played upon completion of the drop.
+-   The standard player fire sound (`SLAUNC`) is played if the player fires.
 
-#### Timing and Duration
-*   The state is **time-limited.** The `SUZTIM` variable is loaded with a value that corresponds to the duration of the explosion animation, typically around 1-2 seconds.
-*   Once the timer expires, the state exits.
+#### 10. Visual and Rendering Behavior
 
-#### Entry and Exit Conditions
-*   **Entry:** Entered from [`CPLAY`](#43-state-cplay-gameplay) when the player presses the Superzapper button and the `SUZTIM` (Superzapper Timer) is charged.
-*   **Exit:** When the explosion animation timer expires, the state **always transitions back to [`CPLAY`](#43-state-cplay-gameplay)**.
+This state runs concurrently with the `CNEWV2` camera animation. The player's ship is rendered, moving down the tube at high speed. The well and starfield are visible and rushing past. Any shots fired by the player are also rendered.
 
-#### State Variables and Flags
-| Variable | Action | Description |
-|---|---|---|
-| `QSTATE` | Write | Set to [`CPLAY`](#43-state-cplay-gameplay) on exit. |
-| `QDSTATE`| Write | Set to `CDBOOM` to render the explosion effect. |
-| `SUZTIM` | Write/Read | The timer for the Superzapper effect and cooldown. Set to a high value on entry, decremented each frame. |
-| `INVAY` | Write | All active entries in the invader table are zeroed out. |
+#### 11. Known Bugs or Quirks
 
-#### Input Handling
-*   All player inputs are **ignored**.
+-   The state transition on exit is to `CENDWA`. Given the naming convention, this might be a typo in the source for `CENDWAV`. This state likely leads back into the main `CPLAY` loop for the next wave.
 
-#### Sound and Audio Behavior
-*   A loud, distinctive "boom" and "sizzle" sound effect (`SOUTS3`) is played upon entering this state.
+#### 12. `CPAUSE` Usage
 
-#### Visual and Rendering Behavior
-*   The `CDBOOM` display state is active, handled by the `DSBOOM` routine.
-*   This routine draws a series of rapidly expanding and contracting lines originating from the player's ship, creating a dramatic visual effect that fills the screen.
-*   The normal well and player ship are still visible, but all other enemies vanish. 
+This state does not use the generic `CPAUSE` state. Its duration is managed by its own internal logic based on player position and velocity.
+
+#### 13. State Inter-dependencies
+
+`CDROP` is intrinsically linked to `CNEWV2`. `CNEWV2` controls the camera and the overall warp effect, while `CDROP` governs the player's actions and state within that effect. 
