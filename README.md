@@ -87,12 +87,12 @@ graph TD
     end
 
     subgraph "Software & Data"
-        G[Game Logic<br/>(ALEXEC.MAC / ALWELG.MAC)]
-        H[Display List Compiler<br/>(ALDISP.MAC)]
-        I[Sound Engine<br/>(ALSOUN.MAC)]
-        J[IRQ Handler<br/>(ALHARD.MAC)]
-        K[Mathbox Driver<br/>(ALDISP.MAC)]
-        L[Vector Shape Data<br/>(ALVROM.MAC)]
+        G["Game Logic (ALEXEC / ALWELG)"]
+        H["Display List Compiler (ALDISP)"]
+        I["Sound Engine (ALSOUN)"]
+        J["IRQ Handler (ALHARD)"]
+        K["Mathbox Driver (ALDISP)"]
+        L["Vector Shape Data (ALVROM)"]
     end
 
     G -- Drives --> H
