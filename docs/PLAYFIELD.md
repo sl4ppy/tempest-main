@@ -183,6 +183,36 @@ While the camera pushes forward, the well itself appears to twist and morph. Thi
 
 This combination of a constant-velocity camera push and a simultaneous, programmatic morphing of the underlying geometry creates the game's distinctive and memorable transition effect.
 
+### 5.3. NEWAV2 Algorithm Detail (from `ALWELG.MAC`, lines 56-121)
+
+The exact frame-by-frame algorithm:
+
+```
+Each frame during wave transition:
+  1. CURSY = ILINLIY                      (reset cursor to rim)
+  2. Z_increment = ZADEST >> 2            (arithmetic shift right 2, signed)
+  3. ZADJL += Z_increment                 (16-bit signed add to vanishing point)
+  4. EYL += $18                           (add 24 to eye position, 16-bit)
+  5. IF EYH >= $FC:
+       PLAGRO = 1                         (disable star field)
+  6. delta = EYL - EYLDES                 (check if arrived)
+  7. IF delta <= 0:                       (past destination)
+       EYL = EYLDES                       (snap to destination)
+       EYH = $FF
+       IF attract_mode:
+         QSTATE = CENDGA                  (end attract game)
+       ELSE:
+         QSTATE = CPLAY                   (begin wave)
+       ROTDIS = $FF                       (request well redraw)
+       JMP MOVCUR                         (update cursor)
+```
+
+**Key constants:**
+- Eye Z speed: `$18` (24 units/frame, constant velocity)
+- Star field cutoff: `EYH >= $FC`
+- Z adjustment divisor: 4 (2-bit right shift)
+- `ZADEST` and `EYLDES` are set per-shape from `HOLZAD`/`HOLZDH` and `HOLEYL` tables (see Appendix A)
+
 ## 6. Collision Boundaries and Gameplay Integration
 
 The playfield's geometry is not just visual; it defines the boundaries for all gameplay mechanics, including movement and collision.
@@ -208,4 +238,127 @@ The most significant interaction with the playfield's geometry is the "Spike" ha
     -   `IF Player_Y_Position >= LINEY[Player_Line]`
     -   If this condition is true, a collision is registered, and the player is destroyed. This makes the Spikes a lethal, invisible wall during the drop.
 
-The [Spike System](./SYSTEMS.md#8-spike-system) is a highly efficient and clever piece of procedural design, creating a dynamic environmental hazard by modifying a single data value in an array that defines the playfield's core collision geometry. 
+The [Spike System](./SYSTEMS.md#8-spike-system) is a highly efficient and clever piece of procedural design, creating a dynamic environmental hazard by modifying a single data value in an array that defines the playfield's core collision geometry.
+
+---
+
+## Appendix A: Complete Well Shape Coordinate Data
+
+All 16 well shapes extracted from `ALDISP.MAC` (lines 1237-1371). Values are unsigned bytes where `$80` (128) represents the center origin. The shapes define the outer rim (near plane) vertices for 16 lines.
+
+### LINEX (X Coordinates, 16 vertices per shape)
+
+All values in hexadecimal.
+
+| Shape | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F |
+|-------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Circle | F0 | E7 | CF | AA | 80 | 56 | 31 | 19 | 10 | 19 | 31 | 56 | 80 | AA | CF | E7 |
+| Square | F0 | F0 | F0 | B8 | 80 | 48 | 10 | 10 | 10 | 10 | 10 | 48 | 80 | B8 | F0 | F0 |
+| Cross | F0 | F0 | B8 | B8 | 80 | 48 | 48 | 10 | 10 | 48 | 48 | 80 | B8 | B8 | F0 | F0 |
+| Peanut | EC | D5 | B1 | 90 | 70 | 4F | 2B | 14 | 14 | 2B | 4F | 90 | B1 | D5 | EC | EC |
+| Key | F0 | C0 | A0 | 94 | 6C | 60 | 40 | 10 | 10 | 40 | 60 | 6C | 94 | A0 | C0 | F0 |
+| Triangle | D9 | C2 | AC | 97 | 80 | 69 | 52 | 3C | 27 | 10 | 35 | 5A | 80 | A6 | CA | F0 |
+| Clover | EA | E0 | 9C | 80 | 64 | 20 | 16 | 50 | 16 | 20 | 64 | 80 | 9C | E0 | EA | B0 |
+| V | 10 | 1E | 2C | 3A | 48 | 56 | 64 | 70 | 90 | 9E | AC | BA | C8 | D6 | E4 | F0 |
+| Stairs | 10 | 10 | 30 | 30 | 50 | 50 | 70 | 70 | 90 | 90 | B0 | B0 | D0 | D0 | F0 | F0 |
+| U | 10 | 10 | 10 | 10 | 16 | 29 | 46 | 69 | 97 | BA | D7 | EA | F0 | F0 | F0 | F0 |
+| Flat | 10 | 1E | 2D | 3C | 4B | 5A | 69 | 78 | 87 | 96 | A5 | B4 | C3 | D2 | E1 | F0 |
+| Heart | DA | A4 | 87 | 80 | 79 | 5C | 26 | 10 | 10 | 20 | 48 | 80 | B8 | E0 | F0 | F0 |
+| Star | B0 | 80 | 50 | 47 | 18 | 30 | 18 | 47 | 50 | 80 | B0 | B9 | E8 | D4 | E8 | B9 |
+| Waves | 10 | 1E | 21 | 28 | 3C | 55 | 66 | 73 | 8D | 9A | AB | C4 | D8 | DF | E2 | F0 |
+| Jagged | 10 | 24 | 30 | 36 | 3E | 49 | 5A | 75 | 94 | A4 | AC | BA | DA | E2 | EA | F0 |
+| 8-shape | 80 | 70 | 48 | 20 | 10 | 20 | 48 | 70 | 80 | 90 | B8 | E0 | F0 | E0 | B8 | 90 |
+
+### LINEZ (Z Coordinates, 16 vertices per shape)
+
+| Shape | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F |
+|-------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Circle | 80 | AA | CF | E7 | F0 | E7 | CF | AA | 80 | 56 | 31 | 19 | 10 | 19 | 31 | 56 |
+| Square | 80 | 80 | 80 | B8 | F0 | B8 | 80 | 80 | 80 | 10 | 10 | 10 | 48 | 80 | B8 | F0 |
+| Cross | 80 | B8 | B8 | F0 | F0 | B8 | B8 | 80 | 80 | 48 | 48 | 10 | 10 | 48 | 48 | 80 |
+| Peanut | 94 | B0 | B8 | A7 | A7 | B8 | B0 | 94 | 6C | 50 | 48 | 59 | 59 | 48 | 50 | 6C |
+| Key | 96 | A3 | C5 | F0 | F0 | C5 | A3 | 96 | 6A | 5D | 3B | 10 | 10 | 3B | 5D | 6A |
+| Triangle | 3D | 6A | 97 | C4 | F0 | C4 | 97 | 6A | 3D | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| Clover | A0 | E0 | EA | B0 | EA | E0 | A0 | 80 | 60 | 20 | 16 | 50 | 16 | 20 | 60 | 80 |
+| V | F0 | D0 | B0 | 90 | 70 | 50 | 30 | 10 | 10 | 30 | 50 | 70 | 90 | B0 | D0 | F0 |
+| Flat | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 | 40 |
+| U | F0 | CB | A6 | 80 | 5C | 39 | 20 | 12 | 12 | 20 | 39 | 5C | 80 | A6 | CB | F0 |
+| Jagged | C0 | A6 | 8A | 6A | 4A | 2F | 14 | 24 | 20 | 39 | 59 | 75 | 72 | 90 | B0 | D0 |
+| 8-shape | 80 | 57 | 48 | 57 | 80 | A9 | BA | A9 | 80 | 57 | 48 | 57 | 80 | A9 | BA | A9 |
+| Heart | E4 | E8 | B7 | 80 | B7 | E8 | E4 | B2 | 7A | 47 | 20 | 10 | 20 | 47 | 7A | B2 |
+| Stairs | 90 | 70 | 70 | 50 | 50 | 30 | 30 | 10 | 10 | 30 | 30 | 50 | 50 | 70 | 70 | 90 |
+| Star | E6 | D0 | E6 | B9 | AE | 80 | 52 | 47 | 14 | 30 | 14 | 47 | 52 | 80 | AE | B9 |
+| Waves | 7E | 6A | 51 | 3A | 2C | 2C | 38 | 4E | 4E | 38 | 2C | 2C | 3A | 51 | 6A | 7E |
+
+### Well Shape Sequence
+
+The `WELSEQ` table (`ALDISP.MAC`, line 1375) maps the wave progression order to shape indices:
+
+```
+WELSEQ: 0, 1, 2, 3, 4, 5, 6, 7, 0D, 9, 8, 0C, 0E, 0F, 0A, 0B
+```
+
+| Wave mod 16 | Index | Shape |
+|-------------|-------|-------|
+| 0 | 0 | Circle |
+| 1 | 1 | Square |
+| 2 | 2 | Cross |
+| 3 | 3 | Peanut |
+| 4 | 4 | Key |
+| 5 | 5 | Triangle |
+| 6 | 6 | Clover |
+| 7 | 7 | V |
+| 8 | D | Star |
+| 9 | 9 | U |
+| 10 | 8 | Stairs |
+| 11 | C | Heart |
+| 12 | E | Jagged |
+| 13 | F | Waves |
+| 14 | A | Flat |
+| 15 | B | 8-shape |
+
+### Per-Shape Camera and Rendering Parameters
+
+From `ALDISP.MAC`, lines 1376-1383:
+
+| Shape | HOLEYL (Eye Y) | HOLEZL (Eye Z) | HOLZAD (Z Adjust) | HOLZDH (Z Adj Hi) | HOLRAP (Planar?) | WELLIS (Lin.Scale) | WELBIN (Bin.Scale) |
+|-------|-------|-------|--------|--------|--------|---------|---------|
+| Circle | $18 | $50 | $40 | $FF | 0 (closed) | $00 | 4 |
+| Square | $1C | $50 | $20 | $FF | 0 (closed) | $00 | 4 |
+| Cross | $18 | $50 | $40 | $FF | 0 (closed) | $60 | 3 |
+| Peanut | $0F | $68 | $80 | $FF | 0 (closed) | $40 | 4 |
+| Key | $18 | $50 | $40 | $FF | 0 (closed) | $00 | 4 |
+| Triangle | $18 | $50 | $40 | $FF | 0 (closed) | $00 | 4 |
+| Clover | $18 | $68 | $70 | $FF | 0 (closed) | $48 | 3 |
+| V | $18 | $B0 | $60 | $00 | -1 (planar) | $40 | 4 |
+| Stairs | $0A | $A0 | $00 | $01 | -1 (planar) | $50 | 5 |
+| U | $18 | $50 | $20 | $FF | -1 (planar) | $28 | 4 |
+| Flat | $10 | $90 | $40 | $00 | -1 (planar) | $50 | 4 |
+| Heart | $0F | $80 | $00 | $00 | 0 (closed) | $00 | 4 |
+| Star | $18 | $20 | $A0 | $FE | 0 (closed) | $00 | 4 |
+| Waves | $0C | $B0 | $40 | $01 | -1 (planar) | $50 | 4 |
+| Jagged | $14 | $60 | $40 | $FF | 0 (closed) | $00 | 4 |
+| 8-shape | $0A | $A0 | $00 | $01 | -1 (planar) | $40 | 5 |
+
+### ILINANG (Line Angle Indices)
+
+Maps each vertex to an angle index (0-F) used for rendering orientation. From `ALDISP.MAC`, lines 1354-1371.
+
+| Shape | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F |
+|-------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Circle | 5 | 6 | 7 | 8 | 9 | A | B | C | D | E | F | 0 | 1 | 2 | 3 | 4 |
+| Square | 4 | 4 | 8 | 8 | 8 | 8 | C | C | C | C | 0 | 0 | 0 | 0 | 4 | 4 |
+| Cross | 4 | 8 | 4 | 8 | 8 | C | 8 | C | C | 0 | C | 0 | 0 | 4 | 0 | 4 |
+| Peanut | 6 | 7 | 9 | 8 | 7 | 9 | A | C | E | F | 1 | 0 | F | 1 | 2 | 4 |
+| Key | 7 | 6 | 5 | 8 | B | A | 9 | C | F | E | D | 0 | 3 | 2 | 1 | 4 |
+| Triangle | 5 | 5 | 5 | 5 | B | B | B | B | B | 0 | 0 | 0 | 0 | 0 | 0 | 5 |
+| Clover | 4 | 8 | B | 5 | 8 | C | E | 9 | C | 0 | 3 | D | 0 | 4 | 7 | 2 |
+| V | D | D | D | D | D | D | D | 0 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 0 |
+| Flat | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| U | C | C | C | D | E | F | F | 0 | 1 | 1 | 2 | 3 | 4 | 4 | 4 | 0 |
+| Jagged | E | D | C | D | D | D | 1 | F | 2 | 3 | 3 | 0 | 3 | 3 | 3 | 0 |
+| 8-shape | B | 9 | 7 | 5 | 3 | 1 | F | D | D | F | 1 | 3 | 5 | 7 | 9 | B |
+| Heart | 8 | B | C | 4 | 5 | 8 | B | C | D | E | F | 1 | 2 | 3 | 4 | 5 |
+| Stairs | C | 0 | C | 0 | C | 0 | C | 0 | 4 | 0 | 4 | 0 | 4 | 0 | 4 | 0 |
+| Star | A | 6 | C | 8 | E | A | 0 | C | 2 | E | 4 | 0 | 6 | 2 | 8 | 4 |
+| Waves | E | C | D | E | 0 | 2 | 2 | 0 | E | E | 0 | 2 | 3 | 4 | 2 | 0 |

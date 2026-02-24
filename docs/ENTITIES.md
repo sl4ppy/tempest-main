@@ -1169,4 +1169,174 @@ An Enemy Bullet is either `Active` or `Inactive`. It uses the `CHARGE` object ar
 | **Velocity** | `WCHARIN`/`WCHARL` | The speed at which the bullet travels towards the player. Set per wave. |
 | **Fire Chance Table**| `CHANCE`| A table of probabilities used to throttle enemy firing rate. |
 
-The remaining sections are not applicable to this entity. 
+The remaining sections are not applicable to this entity.
+
+---
+---
+
+# Appendix: Attract Mode Demo AI
+
+The attract mode uses the `AUTOCU` routine (`ALWELG.MAC`, lines 976-1005) to simulate player input. It replaces joystick reads when `QSTATUS` bit 7 (`MATRACT = $80`) is set.
+
+## Algorithm
+
+A pure greedy targeting strategy — always pursue the closest enemy:
+
+```
+1. best_y = -1 (0xFF, furthest possible)
+   best_index = -1
+2. FOR each invader (X = WINVMX-1 downto 0):
+     IF INVAY[X] != 0 (alive):
+       IF INVAY[X] < best_y:
+         best_y = INVAY[X]
+         best_index = X
+3. IF best_index >= 0 (valid target found):
+     target_line = INVAL1[best_index]
+     cursor_line = CURSL1
+     delta = POLDEL(target_line, cursor_line)  (shortest polar distance)
+     IF delta != 0:
+       IF delta > 0: output = -9  (move counter-clockwise)
+       ELSE:         output = +9  (move clockwise)
+4. RETURN output (fed into MOVCUR as simulated joystick input)
+```
+
+The AI does not fire the superzapper or make strategic decisions — it simply moves toward the nearest invader. Firing is handled by the normal `FIREPC` routine which auto-fires during attract mode.
+
+---
+---
+
+# Appendix: Enemy Animation Frame Data
+
+## Animation Control Bytes
+
+Each invader's appearance is controlled by two bytes:
+
+**`INVAC1`** (primary status):
+- Bits 0-2 (`INVABI = $07`): Entity type (0=Flipper, 1=Pulsar, 2=Tanker, 3=Trailer, 4=Fuse)
+- Bits 3-4 (`INVSEQ`): Animation sequence index
+- Bit 7 (`INVMOT`): Motion flag (0=on line, 1=jumping/flipping)
+
+**`INVAC2`** (secondary status):
+- Bits 0-1 (`INVCAR`): Cargo type (Tankers only: 0=none, 1=flippers, 2=pulsars, 3=fuses)
+- Bit 6 (`INVFIR`): Fire enable
+- Bit 7 (`INVDIR`): Direction (0=up toward player, 1=down)
+
+## Per-Type Animation Details
+
+### Flipper
+- **Frame selection**: `INVAC1` INVSEQ bits (3-4) index into `FLITAB`
+- **`FLITAB`**: `CINVA1, CINVA1, CINVA1, CINVA1` (all frames identical when on line)
+- **Visual change**: Occurs during flips via `INVMOT` flag, using `IJMPDS` jump display routine
+
+### Tanker
+- **Frame selection**: `INVAC2` bits 0-1 (cargo type) index into `TANTAB`
+- **`TANTAB`**: `PTTANK` (empty), `PTTANK` (flippers), `PTTANP` (pulsars), `PTTANF` (fuses)
+- **Not time-animated**: Shape depends on what the tanker is carrying
+
+### Trailer (Spiker)
+- **Frame selection**: `QFRAME & $03` (global frame counter mod 4) indexes into `TRATAB`
+- **`TRATAB`**: `PTSPI1+0, PTSPI1+2, PTSPI1+4, PTSPI1+6` (4 animation frames)
+- **Rate**: New frame every 4 display frames (automatic via QFRAME)
+
+### Fuseball
+- **Frame selection**: `QFRAME & $03` (same as trailer)
+- **Shape table offset**: `(QFRAME & 3) << 1` into `PTFUSE` base
+- **Special**: When `D4` bit set, lateral movement creates climbing effect via `DELTA8`
+
+### Pulsar
+- **Frame selection**: `(PULSON + 64) >> 4` gives frame index 0-4
+- **`PULTAB`**: `CPULS0, CPULS1, CPULS2, CPULS3, CPULS4, CPULS4` (frame 5 = frame 4)
+- **Rate**: Controlled by `PULTIM` table (4 frames at waves 1-48, 6 at 49-64, 8 at 65-99)
+- **Color**: `PULSON < 0` = turquoise (off), `PULSON > 0` = white (potent/pulsing)
+
+## Shape Pointer Reference
+
+| Label | Entity |
+|-------|--------|
+| `PTCURS` | Player cursor |
+| `CINVA1` | Flipper (on line) |
+| `CPULS0-4` | Pulsar frames 0-4 |
+| `PTTANK` | Tanker (empty) |
+| `PTTANP` | Tanker (carrying pulsars) |
+| `PTTANF` | Tanker (carrying fuses) |
+| `PTSPI1+0/2/4/6` | Trailer frames 0-3 |
+| `PTFUSE+0/2/4/6` | Fuseball frames 0-3 |
+| `PTESHO` | Enemy shot |
+| `PTSPAR` | Invader death splat |
+| `PTEXP1` | Shot-vs-shot explosion |
+| `PTFUSX+0/2/4` | Fuse explosion frames |
+| `PTSTR1` | Star field element |
+
+---
+---
+
+# Appendix: Collision Detection System
+
+This appendix documents the collision detection algorithm and parameters extracted from `ALWELG.MAC` (routine `COLLIS`/`COLCHK`, line 2908+) and `ALCOMN.MAC`.
+
+## Entity Type Indices
+
+| Index | Constant | Entity Type |
+|-------|----------|-------------|
+| 0 | `ZABFLI` | Flipper |
+| 1 | `ZABPUL` | Pulsar |
+| 2 | `ZABTAN` | Tanker |
+| 3 | `ZABTRA` | Trailer (Spiker) |
+| 4 | `ZABFUS` | Fuseball |
+
+The `INVABI` bitmask (`$07`) extracts the entity type from `INVAC1`.
+
+## ENSIZE Table (Collision Range by Enemy Type)
+
+`ENSIZE` is a 5-byte table in RAM (`ALCOMN.MAC`, line 780). Values are computed dynamically at wave start by the `TIMES8` routine.
+
+### Collision Range Formula
+
+For Flippers, Pulsars, Tankers, and Trailers, the `TIMES8` routine computes:
+
+```
+speed_hi = (raw_speed * 8) >> 8   (high byte of speed * 8)
+ENSIZE[type] = (ABS(speed_hi) + PCVELO + 4) / 2
+             = (ABS(speed_hi) + 13) / 2
+```
+
+Where `PCVELO = 9` (player shot velocity).
+
+For Fuseballs, a fixed value is used:
+```
+ENSIZE[ZABFUS] = (PCVELO + 3) / 2 = (9 + 3) / 2 = 6
+```
+
+### CHACHA (Charge-to-Charge Collision Distance)
+
+`CHACHA` is a 1-byte RAM variable (`ALCOMN.MAC`, line 672) computed from the enemy shot speed via the same `TIMES8` formula:
+
+```
+CHACHA = (ABS(charge_speed_hi) + 13) / 2
+```
+
+## Collision Detection Algorithm (`COLLIS` / `COLCHK`)
+
+For each active player shot (loop over `NPCHAR` slots):
+
+1. Load player shot Y position (`CHARY[X]`)
+2. For each enemy shot and invader (loop over `NICHAR + NINVAD` slots):
+   a. Calculate `delta_Y = ABS(player_shot_Y - target_Y)`
+   b. **If target is an enemy shot** (`index < NICHAR`):
+      - Check `delta_Y < CHACHA`
+      - If in range, check same lane: `CHARL1[player] == CHARL1[enemy]`
+      - If both conditions met: call `INCCSQ` (initialize explosion)
+   c. **If target is an invader** (`index >= NICHAR`):
+      - Extract entity type: `type = INVAC1[invader] & INVABI`
+      - Check `delta_Y < ENSIZE[type]`
+      - If in range and same lane: destroy invader (special handling for Fuseballs)
+
+### Key Constants
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `PCVELO` | 9 | Player shot velocity (integer part) |
+| `NPCHAR` | 8 | Max player shots on screen |
+| `NICHAR` | 4 | Max enemy shots on screen |
+| `NINVAD` | 7 | Max invaders active |
+| `INVABI` | `$07` | Bitmask for entity type extraction |

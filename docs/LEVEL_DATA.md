@@ -132,4 +132,229 @@ This also uses `TZANDF` to set the starting height of the enemies at the top of 
 | :--- | :--- | :--- | :--- |
 | `TZANDF` | 1-99 | `[E0, D8, D4, ...]` | A repeating sequence of 16 different height values. |
 
+---
+
+## Complete Decoded Level Data Tables
+
+All values below are extracted from `ALWELG.MAC`. See [Encoding Types](#encoding-types) for how each type (`T1`, `TZ`, `TA`, `TB`, `TR`, `TZANDF`) works.
+
+### Complete `TCHARFR` (Invader Fire Delay, in frames)
+
+| Waves | Type | Raw Data | Decoded Values |
+| :--- | :--- | :--- | :--- |
+| 1-20 | `TA` | `80, -3` | 80, 77, 74, 71, 68, 65, 62, 59, 56, 53, 50, 47, 44, 41, 38, 35, 32, 29, 26, 23 |
+| 21-64 | `T1` | `20` | All 20 |
+| 65-99 | `T1` | `10` | All 10 |
+
+### Complete `TCHAMX` (Max Enemy Shots minus 1)
+
+| Waves | Type | Raw Data | Decoded Values |
+| :--- | :--- | :--- | :--- |
+| 1-9 | `TZ` | per-wave | 1, 1, 1, 2, 3, 2, 2, 3, 3 |
+| 10-64 | `T1` | `2` | All 2 |
+| 65-99 | `T1` | `3` | All 3 |
+
+### Complete `TINVIN` (Base Invader Speed, signed)
+
+| Waves | Type | Raw Data | Decoded Values |
+| :--- | :--- | :--- | :--- |
+| 1-8 | `TA` | `-44, -5` | -44, -49, -54, -59, -64, -69, -74, -79 |
+| 9-16 | `TZ` | per-wave | -81, -84, -84, -84, -88, -92, -96, -96 |
+| 17-25 | `TA` | `-81, -3` | -81, -84 (note: -81 base, step by -3 per additional wave) |
+| 26-32 | `TA` | `-99, -3` | -99, -102, -105, -108, -111, -114, -117 |
+| 33-39 | `TA` | `-108, -3` | -108, -111, -114, -117, -120, -123, -126 |
+| 40-48 | `TA` | `-110, -1` | -110, -111, -112, ..., -118 |
+| 49-64 | `TA` | `-120, -1` | -120, -121, -122, ..., -135 |
+| 65-99 | `TR` | `-160, -191` | Alternates: -160, -191, -160, -191, ... |
+
+### Complete `TSPIIN` (Spinner Speed Increment)
+
+| Waves | Type | Raw Data | Decoded Values |
+| :--- | :--- | :--- | :--- |
+| 1-20 | `TB` | `0` | Add 0 to `WINVIL` (no extra speed) |
+| 21-32 | `TB` | `-48` | Add -48 to `WINVIL` |
+| 33-48 | `TB` | `-40` | Add -40 to `WINVIL` |
+| 49-99 | `TB` | `-48` | Add -48 to `WINVIL` |
+
+### Complete `TCHARIN` (Charge Shot Length)
+
+| Waves | Type | Raw Data | Decoded Values |
+| :--- | :--- | :--- | :--- |
+| 1-99 | `TB` | `-64` | Add -64 to `WCHARL` |
+
+### Complete Flipper Count (`WFLIMI` / `WFLIMX`)
+
+| Waves | Min | Max |
+| :--- | :--- | :--- |
+| 1-4 | 1 | 4 |
+| 5-16 | 0 | 5 |
+| 17-19 | 0 | 3 |
+| 20-25 | 0 | 4 |
+| 26-99 | 0 | 5 |
+
+### Complete Tanker Count (`WTANMI` / `WTANMX`)
+
+| Waves | Min | Max |
+| :--- | :--- | :--- |
+| 1 | 0 | 0 |
+| 2 | 0 | 0 |
+| 3 | 1 | 1 |
+| 4 | 0 | 0 |
+| 5 | 1 | 1 |
+| 6-16 | 1 | 2 |
+| 17-26 | 1 | 1 |
+| 27-32 | 1 | 1 |
+| 33-44 | 1 | 2 |
+| 45-99 | 1 | 3 |
+
+### Complete Spinner Count (`WSPIMI` / `WSPIMX`)
+
+| Waves | Min | Max |
+| :--- | :--- | :--- |
+| 1-3 | 0 | 0 |
+| 4 | 1 | 2 |
+| 5 | 2 | 3 |
+| 6 | 2 | 4 |
+| 7-10 | 2 | 4 |
+| 11-16 | 2 | 3 |
+| 17-19 | 0 | (not set) |
+| 20-25 | 1 | 2 |
+| 26 | 1 | 1 |
+| 27-28 | 1 | 2 |
+| 29-30 | 1 | 2 |
+| 31 | 1 | 1 |
+| 32 | 1 | 2 |
+| 35-39 | 1 | 1 |
+| 43-99 | 1 | 1 |
+
+### Complete Fuse Count (`WFUSMI` / `WFUSMX`)
+
+| Waves | Min | Max |
+| :--- | :--- | :--- |
+| 1-10 | 0 | 0 |
+| 11-16 | 1 | 1 |
+| 17-21 | 0 | 0 |
+| 22-25 | 1 | 1 |
+| 26 | 0 | 0 |
+| 27-32 | 1 | 1 |
+| 33-39 | 1 | 4 |
+| 40-99 | 1 | 3 |
+
+### Complete Pulsar Parameters
+
+**`WPULPOT` (Pulsar Potency Height):**
+
+| Waves | Value |
+| :--- | :--- |
+| 1-64 | $A0 |
+| 65-99 | $C0 |
+
+**`WPULTIM` (Pulsar Timer Increment):**
+
+| Waves | Value |
+| :--- | :--- |
+| 1-48 | 4 frames |
+| 49-64 | 6 frames |
+| 65-99 | 8 frames |
+
+**`TPUCHDE` (Pulsar Chase Delay):**
+
+| Waves | Value |
+| :--- | :--- |
+| 17 | 40 (PN) |
+| 18 | 20 (PC) |
+| 19-32 | Alternates 20, 40 |
+| 33-39 | 20, 19, 18, 17, 16, 15, 14 |
+| 40-99 | Alternates 20, 10 |
+
+### Complete `TWTTFRA` (Flipper Top Flip Rate)
+
+| Waves | Value |
+| :--- | :--- |
+| 1-32 | 2 frames |
+| 33-99 | 3 frames |
+
+### Complete `TINVMX` (Max Active Invaders)
+
+| Waves | Value |
+| :--- | :--- |
+| 1-99 | 6 |
+
+### Complete `TNYMMX` (Nymph Count / Total Enemies)
+
+| Waves | Values |
+| :--- | :--- |
+| 1-16 | 10, 12, 15, 17, 20, 22, 20, 24, 27, 29, 27, 24, 26, 28, 30, 27 |
+| 17-26 | 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 |
+| 27-39 | All 27 |
+| 40-48 | 29, 30, 31, 32, 33, 34, 35, 36, 37 |
+| 49-64 | 31 + (wave - 49) |
+| 65-80 | 35 + (wave - 65) |
+| 81-99 | 43 + (wave - 81) |
+
+### Complete `TELIHI` (Enemy Line Height, TZANDF mod 16)
+
+| Mod 16 Index | Value (hex) |
+| :--- | :--- |
+| 0 | $00 |
+| 1 | $00 |
+| 2 | $00 |
+| 3 | $E0 |
+| 4 | $D8 |
+| 5 | $D4 |
+| 6 | $D0 |
+| 7 | $C8 |
+| 8 | $C0 |
+| 9 | $B8 |
+| A | $B0 |
+| B | $A8 |
+| C | $A0 |
+| D | $A0 |
+| E | $A0 |
+| F | $A8 |
+
+### Fuse Parameters
+
+**`TWFUSC` (Fuse Scan Range):**
+
+| Waves | Value |
+| :--- | :--- |
+| 17-32 | Alternates 0, 40 |
+| 33-48 | Alternates 40, $C0 |
+| 49-99 | $C0 |
+
+**`TFUFRQ` (Fuse Frequency):**
+
+| Waves | Value |
+| :--- | :--- |
+| 1-16 | 220 |
+| 17-39 | 192 |
+| 40-64 | 192 + (wave - 40) |
+| 65-99 | 230 |
+
+### Bonus Point Thresholds (`BONPTM`)
+
+| Level | Points |
+| :--- | :--- |
+| 0 | 0 |
+| 1 | 60 |
+| 2 | 160 |
+| 3 | 320 |
+| 4 | 540 |
+| 5 | 740 |
+| 6 | 940 |
+| 7 | 1140 |
+| 8 | 1340 |
+
+### Skill Level Selection Table (`LEVEL`)
+
+Maps skill level selection index to starting wave number:
+
+```
+0, 2, 4, 6, 8, 10, 12, 14, 16, 19, 33, 23, 37, 27, 48, 50,
+35, 39, 43, 70, 72, 81, 85, 89, 98, 100, 114, 128
+```
+
+End marker: `$FF`
+
 --- 

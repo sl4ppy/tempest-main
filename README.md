@@ -60,6 +60,17 @@ These documents cover the user interface and provide direct analysis of specific
 | [**`docs/ADDITIONAL_DATA.md`**](./docs/ADDITIONAL_DATA.md) | Contains miscellaneous data and analysis that doesn't fit into the other categories, including details on the EAROM (non-volatile storage) map. |
 | [**`docs/LEGACY_FILES.md`**](./docs/LEGACY_FILES.md) | A brief description of original Atari documentation files that were included with the source but are now superseded by this documentation set. |
 
+---
+
+### 5. Hardware & Low-Level Reference
+These documents provide complete specifications for the arcade hardware registers, instruction encodings, and the enemy behavior scripting system.
+
+| File | Description |
+|---|---|
+| [**`docs/HARDWARE_REGISTERS.md`**](./docs/HARDWARE_REGISTERS.md) | Complete memory map, I/O register definitions, POKEY sound chip register map with channel mapping, Mathbox register protocol, Vector Generator instruction bit-level encoding, and EAROM interface. |
+| [**`docs/CAM_SCRIPTS.md`**](./docs/CAM_SCRIPTS.md) | Full documentation of the CAM (Computer-Aided Movement) bytecode interpreter that drives all enemy AI behavior, including the complete instruction set, all script definitions, and per-wave assignment tables. |
+| [**`docs/DISPLAY_COMPILER.md`**](./docs/DISPLAY_COMPILER.md) | Documents the display list compiler algorithm, including double-buffering, drawing order, per-entity rendering dispatch, and the WORSCR 3D-to-2D projection protocol. |
+
 ## System Architecture
 
 The game runs on custom Atari arcade hardware, driven by a **6502 microprocessor**. The architecture is defined by the interplay between the central processor, Read-Only Memory (ROMs), and specialized co-processors for vector graphics generation and mathematics.
